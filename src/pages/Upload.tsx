@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { useGenerateEmail } from "@/hooks/useGenerateEmail"
 import { useSaveLeads } from "@/hooks/useSaveLeads"
 import { UINewLead } from "@/types/leads"
+import { toast } from "sonner"
 
 export default function UploadPage() {
     const [leads, setLeads] = useState<UINewLead[]>([])
@@ -57,7 +58,15 @@ export default function UploadPage() {
             .filter((lead): lead is UINewLead & { emailText: string } => !!lead.emailText)
             .map((lead) => ({ ...lead, status: lead.status || "draft" }))
 
-        saveLeads(leadsToSave)
+        saveLeads(leadsToSave, {
+            onSuccess: () => {
+                toast.success("Leads saved successfully!")
+            },
+            onError: (error) => {
+                console.error("Failed to save leads:", error)
+                toast.error("Failed to save leads. Please try again.")
+            },
+        })
     }
 
     return (

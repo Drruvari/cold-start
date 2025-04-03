@@ -10,10 +10,12 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { useDialog } from "@/hooks/useDialog"
+import { useSendEmail } from "@/hooks/useSendEmail"
 import { getSupabaseWithAuth } from "@/lib/supabase"
 import { DBLead } from "@/types/db"
 import { useAuth } from "@clerk/clerk-react"
-import { Trash } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { ArrowDownUp, Eye, Inbox, Leaf, Linkedin, MessageCircle, TextCursor, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog"
@@ -27,6 +29,9 @@ function LeadItem({
     onDelete: (id: string) => void
     onUpdate: (updated: DBLead) => void
 }) {
+    const { mutateAsync: sendEmail } = useSendEmail()
+    const queryClient = useQueryClient()
+
     const [editedText, setEditedText] = useState(lead.email_text || "")
     const [status, setStatus] = useState<DBLead["status"]>(lead.status)
     const [currentText, setCurrentText] = useState(lead.email_text || "")
@@ -81,6 +86,52 @@ function LeadItem({
         toast.success("Lead deleted")
     }
 
+    const handleSend = async () => {
+        const token = await getToken({ template: "supabase" })
+        const supabase = getSupabaseWithAuth(token!)
+
+        const trackingPixel = `<img src="${window.location.origin}/api/track/open?leadId=${lead.id}" width="1" height="1" style="display:none;" />`
+        const trackedEmailText = currentText.replace(/https?:\/\/[^\s)]+/g, (url) => {
+            return `${window.location.origin}/api/track/click?leadId=${lead.id}&url=${encodeURIComponent(url)}`
+        })
+        const finalEmail = `${trackedEmailText}\n\n${trackingPixel}`
+
+        try {
+            await sendEmail({
+                to: lead.email,
+                subject: `Reaching out: ${lead.company}`,
+                html: finalEmail,
+            })
+
+            const { data, error } = await supabase
+                .from("leads")
+                .update({
+                    status: "sent",
+                    sent_at: new Date().toISOString(),
+                    email_text: finalEmail,
+                })
+                .eq("id", lead.id)
+                .select()
+                .single()
+
+            if (error) {
+                toast.error("Failed to update status in DB")
+                return
+            }
+
+            setStatus("sent")
+            onUpdate(data)
+            toast.success("Email sent ✅")
+
+            // Refresh data
+            queryClient.invalidateQueries({ queryKey: ["leads"] })
+
+        } catch (err: unknown) {
+            console.error(err)
+            toast.error("Failed to send email")
+        }
+    }
+
     return (
         <li className="border p-4 rounded-xl space-y-2">
             <p>
@@ -90,10 +141,46 @@ function LeadItem({
             <p className="text-sm mt-2 whitespace-pre-wrap">{currentText}</p>
             <p className="text-xs uppercase font-medium text-muted-foreground">Status: {status}</p>
             {lead.company_mission && (
-                <p className="text-sm text-muted-foreground">🌱 Mission: {lead.company_mission}</p>
+                <p className="text-sm text-muted-foreground flex items-center">
+                    <Leaf className="inline mr-1" size={16} />
+                    Mission: {lead.company_mission}
+                </p>
             )}
             {lead.recent_linkedin_post && (
-                <p className="text-sm text-muted-foreground">🔗 Post: {lead.recent_linkedin_post}</p>
+                <p className="text-sm text-muted-foreground flex items-center">
+                    <Linkedin className="inline mr-1" size={16} />
+                    Post: {lead.recent_linkedin_post}
+                </p>
+            )}
+            {lead.sent_at && (
+                <p className="text-xs text-muted-foreground flex items-center">
+                    <Inbox className="inline mr-1" size={16} />
+                    Sent: {new Date(lead.sent_at).toLocaleDateString()}
+                </p>
+            )}
+            {lead.opened_at && (
+                <p className="text-xs text-green-600 flex items-center">
+                    <Eye className="inline mr-1" size={16} />
+                    Opened
+                </p>
+            )}
+            {lead.clicked_at && (
+                <p className="text-xs text-blue-600 flex items-center">
+                    <TextCursor className="inline mr-1" size={16} />
+                    Clicked
+                </p>
+            )}
+            {lead.replied_at && (
+                <p className="text-xs text-purple-600 flex items-center">
+                    <MessageCircle className="inline mr-1" size={16} />
+                    Replied
+                </p>
+            )}
+            {lead.follow_up_sent_at && (
+                <p className="text-xs text-muted-foreground ">
+                    <ArrowDownUp className="inline mr-1" size={16} />
+                    {new Date(lead.follow_up_sent_at).toLocaleDateString()}
+                </p>
             )}
 
             <div className="flex gap-2 mt-2">
@@ -101,6 +188,14 @@ function LeadItem({
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm">Edit</Button>
                     </DialogTrigger>
+
+                    <Button
+                        size="sm"
+                        onClick={handleSend}
+                        disabled={status !== "approved"}
+                    >
+                        Send
+                    </Button>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Edit Email</DialogTitle>
