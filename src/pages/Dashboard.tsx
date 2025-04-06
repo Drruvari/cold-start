@@ -37,16 +37,13 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="space-y-2">
                 <h1 className="text-3xl font-semibold tracking-tight">Leads Dashboard</h1>
-                <p className="text-sm text-muted-foreground">
-                    View, filter, and track cold email performance.
-                </p>
+                <p className="text-sm text-muted-foreground">View, filter, and manage your cold outreach leads.</p>
             </div>
-
             {/* Filters */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <Input
                     placeholder="Search by name, company, or job title"
-                    className="w-full max-w-sm border-none bg-muted/50 shadow-none"
+                    className="w-full max-w-sm border-none bg-muted/30 shadow-none"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
@@ -64,8 +61,7 @@ export default function DashboardPage() {
                     ))}
                 </div>
             </div>
-
-            {/* Lead List */}
+            {/* Content */}
             <div className="border-t border-border pt-6">
                 {isLoading ? (
                     <p className="text-muted-foreground">Loading leads...</p>
@@ -84,7 +80,6 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground">No saved leads yet.</p>
                 )}
             </div>
-
             {/* Export */}
             {leads.length > 0 && (
                 <div className="pt-4 border-t border-border">

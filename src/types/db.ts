@@ -1,4 +1,15 @@
 export type DBLead = {
+    onView: (lead: DBLead) => void
+    onEdit: (lead: DBLead) => void
+    onDelete: (lead: DBLead) => void
+    onSend: (lead: DBLead) => void
+    onApprove: (lead: DBLead) => void
+    onReject: (lead: DBLead) => void
+    onFollowUp: (lead: DBLead) => void
+    onResend: (lead: DBLead) => void
+    onMarkAsOpened: (lead: DBLead) => void
+    onMarkAsClicked: (lead: DBLead) => void
+    onMarkAsReplied: (lead: DBLead) => void
     id: string
     name: string
     email: string
