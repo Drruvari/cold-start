@@ -46,7 +46,13 @@ function LeadItem({
     const { mutateAsync: sendEmail } = useSendEmail()
     const queryClient = useQueryClient()
 
-    const [editedText, setEditedText] = useState(cleanEmailPreview(lead.email_text || ""));
+    function stripHtml(html: string): string {
+        const div = document.createElement("div")
+        div.innerHTML = html
+        return div.textContent || ""
+    }
+
+    const [editedText, setEditedText] = useState(stripHtml(lead.email_text || ""));
     const [status, setStatus] = useState<DBLead["status"]>(lead.status)
     const [currentText, setCurrentText] = useState(lead.email_text || "")
     const [editedSubject, setEditedSubject] = useState(lead.email_subject || "")
@@ -107,14 +113,11 @@ function LeadItem({
         const supabase = getSupabaseWithAuth(token!)
 
         const trackingPixel = `<img src="${window.location.origin}/api/track/open?leadId=${lead.id}" width="1" height="1" style="display:none;" />`
-        const trackedEmailText = currentText.replace(/https?:\/\/[^\s)]+/g, (url) => {
-            return `${window.location.origin}/api/track/click?leadId=${lead.id}&url=${encodeURIComponent(url)}`
-        })
 
         const finalEmail = `
-      <p>${trackedEmailText.replace(/\n/g, "<br>")}</p>
-      ${trackingPixel}
-    `.trim()
+        <p>${editedText.trim().split("\n").map(line => `${line}<br>`).join("")}</p>
+        ${trackingPixel}
+      `.trim()
 
         try {
             await sendEmail({
