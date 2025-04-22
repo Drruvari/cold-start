@@ -2,7 +2,7 @@ import { SignIn, SignUp } from "@clerk/clerk-react"
 import { Navigate, Route, Routes } from "react-router-dom"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import DashboardPage from "./pages/Dashboard"
-import UploadPage from "./pages/Upload"
+import UploadPage from "./types/Upload"
 import AppLayout from "./pages/AppLayout"
 
 function App() {
