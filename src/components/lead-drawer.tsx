@@ -40,9 +40,11 @@ export function LeadDrawer({
                     {lead.recent_linkedin_post && <p>🔗 <strong>Post:</strong> {lead.recent_linkedin_post}</p>}
 
                     {lead.sent_at && <p>📤 <strong>Sent:</strong> {new Date(lead.sent_at).toLocaleDateString()}</p>}
-                    {lead.opened_at && <p>📬 <strong>Opened</strong></p>}
-                    {lead.clicked_at && <p>🔗 <strong>Clicked</strong></p>}
-                    {lead.replied_at && <p>💬 <strong>Replied</strong></p>}
+                    <div className="flex gap-4 text-xs mt-4 text-muted-foreground italic">
+                        {lead.opened_at && <p>📬 Opened</p>}
+                        {lead.clicked_at && <p>🖱️ Clicked</p>}
+                        {lead.replied_at && <p>✉️ Replied</p>}
+                    </div>
                 </div>
 
                 <DrawerFooter className="mt-4">

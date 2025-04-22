@@ -28,4 +28,5 @@ export type DBLead = {
     follow_up_sent_at?: string
     follow_up_enabled: boolean
     follow_up_delay_days: number
+    email_subject?: string
 }
