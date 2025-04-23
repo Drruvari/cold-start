@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
     Trash
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import LeadTrackingTimeline from "./LeadTrackingTimeline"
 import {
@@ -52,10 +52,25 @@ function LeadItem({
         return div.textContent || ""
     }
 
-    const [editedText, setEditedText] = useState(stripHtml(lead.email_text || ""));
+    useEffect(() => {
+        // Only do this once on first load
+        if (!lead.email_subject && lead.email_text?.toLowerCase().startsWith("subject:")) {
+            const [firstLine, ...rest] = lead.email_text.split("\n")
+            const subjectLine = firstLine.replace(/^subject:\s*/i, "").trim()
+            const body = rest.join("\n").trim()
+
+            setEditedSubject(subjectLine)
+            setEditedText(body)
+        } else {
+            setEditedSubject(lead.email_subject || "")
+            setEditedText(stripHtml(lead.email_text || ""))
+        }
+    }, [lead])
+
+    const [editedText, setEditedText] = useState(cleanEmailPreview(lead.email_text || ""))
+    const [editedSubject, setEditedSubject] = useState(lead.email_subject || "")
     const [status, setStatus] = useState<DBLead["status"]>(lead.status)
     const [currentText, setCurrentText] = useState(lead.email_text || "")
-    const [editedSubject, setEditedSubject] = useState(lead.email_subject || "")
 
     const editDialog = useDialog()
     const confirmDialog = useDialog()
@@ -113,7 +128,6 @@ function LeadItem({
         const supabase = getSupabaseWithAuth(token!)
 
         const trackingPixel = `<img src="${window.location.origin}/api/track/open?leadId=${lead.id}" width="1" height="1" style="display:none;" />`
-
         const finalEmail = `
         <p>${editedText.trim().split("\n").map(line => `${line}<br>`).join("")}</p>
         ${trackingPixel}
@@ -197,6 +211,7 @@ function LeadItem({
                             value={editedSubject}
                             onChange={(e) => setEditedSubject(e.target.value)}
                             placeholder="Email subject"
+                            className="mb-4"
                         />
 
                         <Textarea

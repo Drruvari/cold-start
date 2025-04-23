@@ -1,7 +1,7 @@
 import cors from "cors"
 import dotenv from "dotenv"
 import express from "express"
-import { sendEmailHandler } from "../src/api/send-email"
+import sendEmailHandler from "../src/api/send-email"
 
 dotenv.config()
 
