@@ -1,4 +1,4 @@
-import { getSupabaseWithAuth } from "@/lib/supabase"
+import { getSupabaseWithAuth } from "@/lib/supabase/client"
 import { UINewLead } from "@/types/leads"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useMutation } from "@tanstack/react-query"

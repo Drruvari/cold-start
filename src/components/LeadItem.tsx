@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useDialog } from "@/hooks/useDialog"
 import { useSendEmail } from "@/hooks/useSendEmail"
-import { getSupabaseWithAuth } from "@/lib/supabase"
+import { getSupabaseWithAuth } from "@/lib/supabase/client"
 import { DBLead } from "@/types/db"
 import { useAuth } from "@clerk/clerk-react"
 import { useQueryClient } from "@tanstack/react-query"
@@ -48,7 +48,7 @@ function LeadItem({
 
     function stripHtml(html: string): string {
         const div = document.createElement("div")
-        div.innerHTML = html
+        div.innerHTML = html.replace(/<br\s*\/?>/gi, "\n") // decode line breaks
         return div.textContent || ""
     }
 
@@ -67,8 +67,8 @@ function LeadItem({
         }
     }, [lead])
 
-    const [editedText, setEditedText] = useState(cleanEmailPreview(lead.email_text || ""))
-    const [editedSubject, setEditedSubject] = useState(lead.email_subject || "")
+    const [editedText, setEditedText] = useState("")
+    const [editedSubject, setEditedSubject] = useState("")
     const [status, setStatus] = useState<DBLead["status"]>(lead.status)
     const [currentText, setCurrentText] = useState(lead.email_text || "")
 
@@ -167,7 +167,8 @@ function LeadItem({
     }
 
     function cleanEmailPreview(html: string): string {
-        return html.replace(/<img[^>]+track\/(open|click)[^>]*>/gi, "").trim()
+        const noTrackers = html.replace(/<img[^>]+track\/(open|click)[^>]*>/gi, "")
+        return noTrackers.replace(/\n/g, "<br>").trim()
     }
 
     return (
